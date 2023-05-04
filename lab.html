@@ -1,0 +1,106 @@
+<html>
+    <head>
+        <title>OptimiSME</title>
+	<link rel="stylesheet" href="style.css">
+    </head>
+    <div class="topnav">
+        <img class="logo" src="images/logo.png" alt="logo">
+        <a href="index.html">Home</a>
+        <a href="contact.html">Contact</a>
+        <a class="active" href="lab.html">Lab</a>
+        <a href="professional.html">Professional History</a>
+        <a href="accomplishments.html">Accomplishments</a>
+        <a href="skills.html">Skills</a>
+        <a href="gt.html">Education</a>
+    </div>
+
+    <body>
+        <h1>Lab Info</h1>
+        <p> 
+            I love all things tech, I decided to build a home lab to use for learning new skills and challenging myself. 
+            My lab has grown since it inception in 2020. I have opened my lab up to friends that want to enter into the IT field. I provide them with personal 
+            mentorship to learn IT skills such as Linux, Ansible, Git, Python, Security and anything else that they want to learn. 
+            The details about the backend services and physical hardware can be found below. 
+        </p>
+        <h2>Physical Hardware</h2>
+        <OL>
+            <li>Mac Pro 4- TrueNAS</li>
+                <UL>
+                    <li>CPU - Dual Intel Xeon E5520 2.27GHz 4 core</li>
+                    <li>Ram - 24 GB DDR3</li>
+                    <li>128 GB SSD - for OS</li>
+                    <li>3 x 3 TB HDD - configured as raid for storage</li>
+                </UL>
+            <li>Dell Precision T7810 - ESXi</li>
+                <UL>
+                    <li>CPU - Dual Intel Xeon E5-2630 16 core</li>
+                    <li>Ram - 128 GB DDR4</li>
+                    <li>128 GB SSD - for OS ESXi</li>
+                    <li>1 TB HDD - Backup storage for VM's</li>
+                </UL>
+            <li>Orbi</li> 
+                <UL>
+                    <li>Orbi Mesh network - RBK53</li>
+                    <li>1 x Router</li>
+                    <li>2 x Satelites</li>
+                    <li>3 Gbps</li>
+                </UL>
+            <li>Rasberry Pi's</li>
+                <UL>
+                    <li>2 x Raspbery Pi 4 model b</li>
+                    <li>1 x 2 GB model</li>
+                    <li>1 x 4 GB model</li>
+                </UL>
+        </OL>
+        <h2>BackEnd Services</h2>
+        <OL>
+            <li>TrueNAS</li>
+                <UL>
+                    <li>Provides Datastore for ESXi Host.</li>
+                    <li>Configured as iSCSI for connection.</li>
+                </UL>
+            <li>ESXi</li>
+                <UL>
+                    <li>Provides hypervisor to create and use virtual machines.</li>
+                </UL>
+            <li>xWiki</li>
+                <UL>
+                    <li>Provides Learning projects and other documentation.</li>
+                    <li>Service also provides task manager so students can work on requested tasks at any time.</li>
+                </UL>
+            <li>Ansible</li>
+                <UL>
+                    <li>Used to configure basic security configuration, user accounts and other settings on new servers.</li>
+                </UL>
+            <li>DNS</li>
+                <UL>
+                    <li>Provides DNS service using domain starwars.lab.</li>
+                    <li>Router configured to point to internal DNS and then query public DNS servers. IE DNS server does not need to be configured on each server.</li>
+                </UL>
+            <li>Gitlab</li>
+                <UL>
+                    <li>Provides code repositories for learning projects and other projects.</li>
+                    <li>Access is restricted by groups to various projects in Gitlab.</li>
+                </UL>
+            <li>Linux Practice</li>
+                <UL>
+                    <li>Pre-configured VM to allow students to complete the challenges on the RHCSA practice and Linux Challenges projects.</li>
+                    <li>OS is Rockey 9.</li>
+                </UL>
+            <li>NextCloud</li>
+                <UL>
+                    <li>Provides storage for critical files. Allows easy access to upload/download files dirrectly from a web browser or mobile application.</li>
+                </UL>
+            <li>StarKiller</li>
+                <UL>
+                    <li>Provides VPN detection using my custom built python solution.</li>
+                </UL>
+            <li>Disaster Recovery</li>
+                <UL>
+                    <li>In the event that ESXi fails. Build new ESXi host, mount the datastore, reregister virtual machines. Downtime: less than 30 mins.</li>
+                    <li>In the event that a disk fails on TrueNAS, replace the disk. Downtime: None.</li>
+                    <li>In the event that TrueNAS OS fails. Build new TrueNAS host, remount the disks. Downtime: 15 mins.</li>
+                </UL>
+        </OL>
+    </body>
+</html>

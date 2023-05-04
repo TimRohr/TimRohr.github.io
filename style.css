@@ -1,0 +1,106 @@
+/* Add a black background color to the top navigation */
+.topnav {
+  background-color: rgb(27, 25, 25);
+  overflow: hidden;
+  border-radius: 15px;
+  font-family: sans-serif;
+}
+
+.logo {
+  border-radius: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  float: left;
+}
+
+/* Style the links inside the navigation bar */
+.topnav a {
+  float: left;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px;
+  text-decoration: none;
+  font-size: 17px;
+  border-radius: 25px;
+}
+
+/* Change the color of links on hover */
+.topnav a:hover {
+  background-color: #0afcd4;
+  color: black;
+}
+
+/* Add a color to the active/current link */
+.topnav a.active {
+  background-color: #0afc22;
+  color: black;
+}
+
+body {
+  padding: 25px;
+  background-image: url(images/1.2.png);
+  background-repeat: no-repeat;
+  background-size: cover; 
+  color: #0afc22;
+  /*letter-spacing: 2px;*/
+}
+
+h1 {
+  font-size: 35px;
+  font-weight: bolder;
+  font-family: sans-serif;
+}
+
+h2 {
+  font-size: 28px;
+  font-weight: bolder;
+  font-family: sans-serif;
+}
+
+h3 {
+  font-size: 24px;
+  font-weight: bolder;
+  font-family: sans-serif;
+}
+
+p {
+  font-size: 20px;
+  line-height: 150%;
+  font-family: "Andale Mono", monospace;
+}
+
+li {
+  font-size: 20px;
+  line-height: 150%;
+  font-family: "Andale Mono", monospace;
+}
+
+a.email {
+  color: rgb(59, 165, 207);
+  font-family: "Andale Mono", monospace;
+}
+
+.table{
+  width:270px;
+  font-size: 20px;
+  border: 1px solid #0afc22;
+  font-family: "Andale Mono", monospace;
+  text-align: center;
+  position: absolute;
+  top: 90;
+  right: 25;
+  white-space: normal;
+}
+
+.table td{
+  border: 1px solid #0afc22;
+}
+
+.id{
+  width:1px;
+  padding: 5px;
+}
+
+.table_head{
+  color:rgb(77, 185, 228);
+}
