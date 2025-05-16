@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Floating Flower Messages</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+      background: #9caf88; /* Sage green */
+    }
+
+    h1 {
+      text-align: center;
+      color: #fff;
+      margin-top: 20px;
+    }
+
+    #message {
+      text-align: center;
+      font-size: 1.3em;
+      color: #ffffff;
+      margin-top: 20px;
+      padding: 0 10px;
+      z-index: 1000;
+      position: relative;
+    }
+
+    .container {
+      position: relative;
+      width: 100%;
+      height: 80vh;
+      overflow: hidden;
+    }
+
+    .flower {
+      position: absolute;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      cursor: pointer;
+      font-size: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s;
+      animation: float 10s linear infinite;
+    }
+
+    .flower:active {
+      transform: scale(0.9);
+    }
+
+    @keyframes float {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      25% { transform: translate(30px, -20px) rotate(10deg); }
+      50% { transform: translate(-20px, 30px) rotate(-10deg); }
+      75% { transform: translate(10px, -10px) rotate(5deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tap a Floating Flower</h1>
+  <div id="message"></div>
+
+  <div class="container" id="flowerContainer"></div>
+
+  <script>
+    const messages = [
+      "You are beautiful",
+      "You are an amazing Mama",
+      "You are sexy",
+      "You are hot",
+      "You are mine",
+      "I Love you so much",
+      "You are amazing",
+      "Your heart is Golden",
+      "You are worthy",
+      "You are Loved",
+      "You are Gorgeous",
+      "You make me smile",
+      "You make me happy"
+    ];
+
+    const flowerEmojis = ["🌸", "🌼", "🌻", "🌺", "💐", "🌷", "🌹", "🪷", "🥀", "🪻", "🌾", "🌱"];
+    const backgroundColors = [
+      "#ffb3c1", "#b5ead7", "#c3bef0", "#fdfd96",
+      "#ffdac1", "#bae1ff", "#d5aaff", "#ffd6a5",
+      "#f4c2c2", "#b0e0e6", "#ffe4e1", "#c6f1e7"
+    ];
+
+    const container = document.getElementById("flowerContainer");
+
+    function createFloatingFlower(emoji, color) {
+      const flower = document.createElement("div");
+      flower.className = "flower";
+      flower.style.backgroundColor = color;
+      flower.textContent = emoji;
+
+      flower.style.top = Math.random() * 70 + "vh";
+      flower.style.left = Math.random() * 90 + "vw";
+      flower.style.animationDuration = 8 + Math.random() * 5 + "s";
+      flower.style.animationDelay = Math.random() * 5 + "s";
+
+      flower.onclick = () => {
+        const msg = messages[Math.floor(Math.random() * messages.length)];
+        document.getElementById("message").textContent = msg;
+      };
+
+      container.appendChild(flower);
+    }
+
+    // Create flowers with different emojis
+    for (let i = 0; i < flowerEmojis.length; i++) {
+      const emoji = flowerEmojis[i];
+      const color = backgroundColors[i % backgroundColors.length];
+      createFloatingFlower(emoji, color);
+    }
+  </script>
+
+</body>
+</html>
