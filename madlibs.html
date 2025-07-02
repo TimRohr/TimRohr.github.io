@@ -4,14 +4,20 @@
   <meta charset="UTF-8" />
   <title>Mad Libs Game</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 40px; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: green url('https://upload.wikimedia.org/wikipedia/commons/thumb/f/f0/Tulip_icon_pink.svg/1200px-Tulip_icon_pink.svg.png') repeat;
+      background-size: 100px;
+      color: white;
+    }
     input { margin-bottom: 10px; display: block; }
     button { padding: 10px 20px; }
     #story { margin-top: 20px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h1>Mad Libs - 10 Random Stories</h1>
+  <h1>Mad Libs - Random Story</h1>
   <label>Noun: <input type="text" id="noun" /></label>
   <label>Verb: <input type="text" id="verb" /></label>
   <label>Adjective: <input type="text" id="adjective" /></label>
@@ -20,11 +26,11 @@
   <label>Animal: <input type="text" id="animal" /></label>
   <label>Food: <input type="text" id="food" /></label>
   <label>Number: <input type="number" id="number" /></label>
-  <button onclick="createStories()">Create Stories!</button>
+  <button onclick="createStory()">Create Random Story!</button>
   <div id="story"></div>
 
   <script>
-    function createStories() {
+    function createStory() {
       var noun = document.getElementById("noun").value;
       var verb = document.getElementById("verb").value;
       var adjective = document.getElementById("adjective").value;
@@ -47,7 +53,8 @@
         `The ${adjective} ${animal} invited the ${noun} to ${verb} ${adverb} and share some ${food} at the ${place}.`
       ];
 
-      document.getElementById("story").innerHTML = stories.join("<br><br>");
+      var randomIndex = Math.floor(Math.random() * stories.length);
+      document.getElementById("story").innerHTML = `<p>${stories[randomIndex]}</p>`;
     }
   </script>
 </body>
