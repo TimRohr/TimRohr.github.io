@@ -11,23 +11,43 @@
   </style>
 </head>
 <body>
-  <h1>Simple Mad Libs</h1>
-  <label>Enter a noun: <input type="text" id="noun" /></label>
-  <label>Enter a verb: <input type="text" id="verb" /></label>
-  <label>Enter an adjective: <input type="text" id="adjective" /></label>
-  <label>Enter an adverb: <input type="text" id="adverb" /></label>
-  <button onclick="createStory()">Create Story!</button>
+  <h1>Mad Libs - 10 Random Stories</h1>
+  <label>Noun: <input type="text" id="noun" /></label>
+  <label>Verb: <input type="text" id="verb" /></label>
+  <label>Adjective: <input type="text" id="adjective" /></label>
+  <label>Adverb: <input type="text" id="adverb" /></label>
+  <label>Place: <input type="text" id="place" /></label>
+  <label>Animal: <input type="text" id="animal" /></label>
+  <label>Food: <input type="text" id="food" /></label>
+  <label>Number: <input type="number" id="number" /></label>
+  <button onclick="createStories()">Create Stories!</button>
   <div id="story"></div>
 
   <script>
-    function createStory() {
+    function createStories() {
       var noun = document.getElementById("noun").value;
       var verb = document.getElementById("verb").value;
       var adjective = document.getElementById("adjective").value;
       var adverb = document.getElementById("adverb").value;
+      var place = document.getElementById("place").value;
+      var animal = document.getElementById("animal").value;
+      var food = document.getElementById("food").value;
+      var number = document.getElementById("number").value;
 
-      var story = `Once upon a time, there was a ${adjective} ${noun} that loved to ${verb} ${adverb}.`;
-      document.getElementById("story").innerText = story;
+      var stories = [
+        `In the ${place}, a ${adjective} ${animal} decided to ${verb} ${adverb} with a ${noun}.`,
+        `Every morning, the ${noun} wakes up and eats ${number} ${food} before it goes to ${verb} at the ${place}.`,
+        `Once there was a ${adjective} ${noun} who wanted to ${verb} ${adverb} next to a ${animal}.`,
+        `Last night, I dreamed about a ${animal} who ${verb}s ${adverb} while juggling ${number} ${food}.`,
+        `In a hidden ${place}, a ${adjective} ${noun} found a ${animal} eating ${food}.`,
+        `A ${noun} and a ${animal} decided to ${verb} ${adverb} across the ${place}.`,
+        `Did you see that ${adjective} ${animal} ${verb} ${adverb} behind the ${noun}?`,
+        `At ${place}, I found ${number} ${food} hidden by a sneaky ${animal}.`,
+        `Long ago, a ${noun} learned to ${verb} ${adverb} from a wise ${animal}.`,
+        `The ${adjective} ${animal} invited the ${noun} to ${verb} ${adverb} and share some ${food} at the ${place}.`
+      ];
+
+      document.getElementById("story").innerHTML = stories.join("<br><br>");
     }
   </script>
 </body>
