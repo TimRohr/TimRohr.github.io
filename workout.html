@@ -3,170 +3,218 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multi-User Workout Tracker</title>
+    <title>Cloud Workout Tracker</title>
+    <!-- 1. Firebase SDK Imports -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
     <style>
-        body { font-family: sans-serif; background: #121212; color: #e0e0e0; display: flex; justify-content: center; padding: 40px; gap: 20px; }
-        .main-column { display: flex; flex-direction: column; align-items: center; gap: 20px; }
-        .calendar-container, .tracker-sidebar, #log-panel { background: #1e1e1e; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .calendar-container { width: 350px; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
-        .day { padding: 10px; border-radius: 4px; cursor: pointer; background: #2c2c2c; font-size: 14px; }
-        .day.has-workout { border-bottom: 3px solid #00e676; }
-        .day.today { border: 1px solid #00e676; }
-        .tracker-sidebar { width: 280px; }
-        .stat-card { background: #2c2c2c; padding: 15px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #00e676; }
-        .stat-value { font-size: 24px; font-weight: bold; color: #00e676; }
-        #log-panel { width: 350px; display: none; }
-        .entry-item { background: #2c2c2c; padding: 10px; margin-top: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-        .btn-del { color: #ff5252; cursor: pointer; font-weight: bold; }
-        textarea, input, select { width: 100%; margin-top: 10px; background: #2c2c2c; color: white; border: 1px solid #444; border-radius: 4px; padding: 8px; box-sizing: border-box; }
-        .btn-save { background: #00e676; color: #000; border: none; padding: 10px; border-radius: 4px; cursor: pointer; margin-top: 10px; font-weight: bold; width: 100%; }
-        .user-tag { font-size: 10px; color: #00e676; text-transform: uppercase; display: block; }
+        :root { --accent: #00e676; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .user-bar { width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card); padding: 15px; border-radius: 12px; }
+        input, textarea, select { background: #2c2c2c; color: white; border: 1px solid #444; border-radius: 6px; padding: 8px; }
+        .container { display: flex; gap: 20px; max-width: 1000px; width: 100%; flex-wrap: wrap; justify-content: center; }
+        .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); width: 350px; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; }
+        .day { padding: 12px 5px; border-radius: 8px; cursor: pointer; background: #2c2c2c; font-size: 14px; }
+        .day.has-workout { border-bottom: 3px solid var(--accent); }
+        .day.today { border: 2px solid var(--accent); color: var(--accent); }
+        .entry-item { background: #2c2c2c; padding: 10px; margin-top: 10px; border-radius: 8px; position: relative; border-left: 3px solid var(--accent); }
+        .btn-del { color: #ff5252; cursor: pointer; position: absolute; right: 10px; top: 10px; }
+        .btn-main { background: var(--accent); color: #000; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 10px; }
+        .stat-value { font-size: 32px; font-weight: bold; color: var(--accent); }
+        #log-panel { display: none; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <div class="main-column">
-        <div class="calendar-container">
-            <header>
-                <button onclick="changeMonth(-1)">&lt;</button>
-                <h3 id="monthDisplay"></h3>
-                <button onclick="changeMonth(1)">&gt;</button>
-            </header>
-            <div class="days-grid" id="calendarGrid"></div>
-        </div>
 
-        <div id="log-panel">
-            <h4 id="selectedDateText"></h4>
-            <div id="existingEntries"></div>
-            <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
-            <h5>Log Workout</h5>
-            <input type="text" id="userInput" placeholder="Your Name (e.g. Alex)">
-            <input type="number" id="durationInput" placeholder="Duration (mins)">
-            <textarea id="workoutInput" placeholder="Details..."></textarea>
-            <button class="btn-save" onclick="saveWorkout()">Save Entry</button>
+    <div class="user-bar">
+        <div id="auth-section">
+            <button onclick="login()" class="btn-main" style="width: auto; margin-top:0">Login with Google</button>
         </div>
+        <div id="user-display" class="hidden" style="display:flex; align-items:center; gap:15px;">
+            <span id="welcome-text"></span>
+            <button onclick="logout()" style="background:none; border:1px solid #444; color:#888; cursor:pointer; padding:5px 10px; border-radius:6px">Sign Out</button>
+        </div>
+        <select id="userFilter" onchange="renderAll()"><option value="all">Everyone</option></select>
     </div>
 
-    <div class="tracker-sidebar">
-        <div class="stat-card">
-            <h4>Filter by User</h4>
-            <select id="userFilter" onchange="renderAll()">
-                <option value="all">All Users</option>
+    <div class="container">
+        <div style="display:flex; flex-direction:column; gap:20px;">
+            <div class="card">
+                <header>
+                    <button onclick="changeMonth(-1)" style="background:none; border:none; color:white; cursor:pointer;">&#10094;</button>
+                    <h3 id="monthDisplay" style="margin:0"></h3>
+                    <button onclick="changeMonth(1)" style="background:none; border:none; color:white; cursor:pointer;">&#10095;</button>
+                </header>
+                <div class="days-grid" id="calendarGrid"></div>
+            </div>
+
+            <div class="card" id="log-panel">
+                <h4 id="selectedDateText" style="margin:0; color:var(--accent);"></h4>
+                <div id="existingEntries"></div>
+                <div style="margin-top:15px; border-top:1px solid #333; padding-top:15px;">
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <input type="number" id="durationInput" placeholder="Mins" style="width:80px;">
+                        <input type="text" id="workoutInput" placeholder="Workout details..." style="flex:1">
+                    </div>
+                    <button class="btn-main" onclick="saveWorkout()">ADD ENTRY</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="width: 300px;">
+            <select id="timeframe" onchange="renderStats()" style="background:transparent; border:none; color:#888; font-size:11px; font-weight:bold; margin-bottom:5px">
+                <option value="day">TODAY</option>
+                <option value="week" selected>WEEK (SUN-SAT)</option>
+                <option value="month">MONTH</option>
+                <option value="year">YEAR</option>
             </select>
+            <div class="stat-value" id="statDisplay">0.0h</div>
+            <h4 style="border-bottom:1px solid #333; padding-bottom:10px;">History</h4>
+            <div id="recentList"></div>
         </div>
-        <div class="stat-card">
-            <h4>Weekly Activity</h4>
-            <div class="stat-value" id="weeklyHours">0.0h</div>
-        </div>
-        <h4>Recent Logs</h4>
-        <div id="recentList"></div>
     </div>
 
     <script>
-        let date = new Date();
+        // Firebase CONFIG 
+        const firebaseConfig = {
+            apiKey: "AIzaSyBMWtr0_uUodMhyZl5iFDtt1PTbJdBdCkA",
+            authDomain: "gizmos-workout-tracker.firebaseapp.com",
+            databaseURL: "https://gizmos-workout-tracker-default-rtdb.firebaseio.com",
+            projectId: "gizmos-workout-tracker",
+            storageBucket: "gizmos-workout-tracker.firebasestorage.app",
+            messagingSenderId: "596976593675",
+            appId: "1:596976593675:web:42ad30be5205ce1c05500e",
+            measurementId: "G-8K6PT8G7LM"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.database();
+
+        let currentDate = new Date();
         let selectedDateKey = "";
-        const workouts = JSON.parse(localStorage.getItem('workoutData_v3')) || {};
+        let workoutData = {};
+        let currentUser = null;
+
+        // Listen for Login State
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('auth-section').classList.add('hidden');
+                document.getElementById('user-display').classList.remove('hidden');
+                document.getElementById('welcome-text').innerText = `Hi, ${user.displayName}`;
+                syncData();
+            } else {
+                currentUser = null;
+                document.getElementById('auth-section').classList.remove('hidden');
+                document.getElementById('user-display').classList.add('hidden');
+                workoutData = {};
+                renderAll();
+            }
+        });
+
+        function login() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); }
+        function logout() { auth.signOut(); }
+
+        // Sync with Cloud
+        function syncData() {
+            db.ref('workouts').on('value', snapshot => {
+                workoutData = snapshot.val() || {};
+                renderAll();
+            });
+        }
 
         function renderAll() {
-            updateUserFilter();
+            const filter = document.getElementById('userFilter');
+            const currentF = filter.value;
+            const users = new Set();
+            Object.values(workoutData).forEach(day => Object.values(day).forEach(w => users.add(w.user)));
+            filter.innerHTML = '<option value="all">Everyone</option>';
+            users.forEach(u => filter.innerHTML += `<option value="${u}">${u}</option>`);
+            filter.value = currentF;
+
             renderCalendar();
             renderStats();
             if (selectedDateKey) openLog(selectedDateKey);
         }
 
-        function updateUserFilter() {
-            const filter = document.getElementById('userFilter');
-            const currentVal = filter.value;
-            const users = new Set();
-            Object.values(workouts).forEach(day => day.forEach(w => users.add(w.user)));
-            
-            filter.innerHTML = '<option value="all">All Users</option>';
-            users.forEach(u => filter.innerHTML += `<option value="${u}">${u}</option>`);
-            filter.value = currentVal;
-        }
-
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
-            const monthDisplay = document.getElementById('monthDisplay');
-            const selectedUser = document.getElementById('userFilter').value;
+            const filter = document.getElementById('userFilter').value;
             grid.innerHTML = "";
+            const y = currentDate.getFullYear(), m = currentDate.getMonth();
+            document.getElementById('monthDisplay').innerText = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
             
-            const year = date.getFullYear();
-            const month = date.getMonth();
-            monthDisplay.innerText = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDay = new Date(y, m, 1).getDay();
+            const daysInMonth = new Date(y, m + 1, 0).getDate();
 
             for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div></div>`;
             for (let d = 1; d <= daysInMonth; d++) {
-                const dateKey = `${year}-${month + 1}-${d}`;
-                let entries = workouts[dateKey] || [];
-                if (selectedUser !== 'all') entries = entries.filter(e => e.user === selectedUser);
-                
-                const isToday = new Date().toDateString() === new Date(year, month, d).toDateString() ? 'today' : '';
-                grid.innerHTML += `<div class="day ${isToday} ${entries.length > 0 ? 'has-workout' : ''}" onclick="openLog('${dateKey}')">${d}</div>`;
+                const dateKey = `${y}-${m + 1}-${d}`;
+                const hasData = workoutData[dateKey] && Object.values(workoutData[dateKey]).some(w => filter === 'all' || w.user === filter);
+                grid.innerHTML += `<div class="day ${new Date().toDateString() === new Date(y, m, d).toDateString() ? 'today' : ''} ${hasData ? 'has-workout' : ''}" onclick="openLog('${dateKey}')">${d}</div>`;
             }
         }
 
         function openLog(dateKey) {
             selectedDateKey = dateKey;
-            const panel = document.getElementById('log-panel');
-            const entryList = document.getElementById('existingEntries');
-            panel.style.display = 'block';
-            document.getElementById('selectedDateText').innerText = "Logs for " + dateKey;
-            
-            entryList.innerHTML = "";
-            (workouts[dateKey] || []).forEach((item, index) => {
-                entryList.innerHTML += `
-                    <div class="entry-item">
-                        <span><span class="user-tag">${item.user}</span><strong>${item.mins}m</strong>: ${item.note}</span>
-                        <span class="btn-del" onclick="deleteEntry('${dateKey}', ${index})">✕</span>
-                    </div>`;
-            });
+            document.getElementById('log-panel').style.display = 'block';
+            document.getElementById('selectedDateText').innerText = dateKey;
+            const entries = workoutData[dateKey] ? Object.entries(workoutData[dateKey]) : [];
+            document.getElementById('existingEntries').innerHTML = entries.map(([id, item]) => `
+                <div class="entry-item">
+                    <small style="color:var(--accent)">${item.user}</small>
+                    <div>${item.note} (${item.mins}m)</div>
+                    <span class="btn-del" onclick="deleteEntry('${dateKey}', '${id}')">&times;</span>
+                </div>`).join('');
         }
 
         function saveWorkout() {
-            const user = document.getElementById('userInput').value.trim();
-            const note = document.getElementById('workoutInput').value;
+            if (!currentUser) return alert("Log in to save data!");
+            const note = document.getElementById('workoutInput').value.trim();
             const mins = document.getElementById('durationInput').value;
-            if (user && note && mins) {
-                if (!workouts[selectedDateKey]) workouts[selectedDateKey] = [];
-                workouts[selectedDateKey].push({ user, note, mins: parseInt(mins), timestamp: new Date().getTime() });
-                localStorage.setItem('workoutData_v3', JSON.stringify(workouts));
-                renderAll();
+            if (note && mins) {
+                db.ref(`workouts/${selectedDateKey}`).push({
+                    user: currentUser.displayName,
+                    uid: currentUser.uid,
+                    note: note,
+                    mins: parseInt(mins),
+                    timestamp: Date.now()
+                });
+                document.getElementById('workoutInput').value = "";
             }
         }
 
-        function deleteEntry(dateKey, index) {
-            workouts[dateKey].splice(index, 1);
-            if (workouts[dateKey].length === 0) delete workouts[dateKey];
-            localStorage.setItem('workoutData_v3', JSON.stringify(workouts));
-            renderAll();
+        function deleteEntry(dateKey, entryId) {
+            db.ref(`workouts/${dateKey}/${entryId}`).remove();
         }
 
         function renderStats() {
-            const selectedUser = document.getElementById('userFilter').value;
+            const filter = document.getElementById('userFilter').value;
+            const timeframe = document.getElementById('timeframe').value;
             let all = [];
-            Object.keys(workouts).forEach(date => {
-                workouts[date].forEach(w => { if(selectedUser === 'all' || w.user === selectedUser) all.push({...w, date}); });
+            Object.keys(workoutData).forEach(d => {
+                Object.values(workoutData[d]).forEach(w => { if(filter === 'all' || w.user === filter) all.push({...w, date: d}); });
             });
             
-            all.sort((a,b) => b.timestamp - a.timestamp);
-            document.getElementById('recentList').innerHTML = all.slice(0, 5).map(w => `<div class="entry-item"><span style="font-size:11px"><span class="user-tag">${w.user}</span>${w.note}</span></div>`).join('') || "No logs.";
-
             const now = new Date();
-            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).setHours(0,0,0,0);
-            let totalMins = all.filter(w => new Date(w.date) >= startOfWeek).reduce((sum, w) => sum + w.mins, 0);
-            document.getElementById('weeklyHours').innerText = (totalMins / 60).toFixed(1) + "h";
+            let start = new Date(now.setHours(0,0,0,0));
+            if(timeframe === 'week') start.setDate(now.getDate() - now.getDay());
+            else if(timeframe === 'month') start.setDate(1);
+            else if(timeframe === 'year') { start.setMonth(0); start.setDate(1); }
+
+            const totalMins = all.filter(w => new Date(w.date) >= start).reduce((s, w) => s + w.mins, 0);
+            document.getElementById('statDisplay').innerText = (totalMins / 60).toFixed(1) + "h";
+            
+            all.sort((a,b) => b.timestamp - a.timestamp);
+            document.getElementById('recentList').innerHTML = all.slice(0, 5).map(w => `<div style="font-size:12px; padding:5px 0; border-bottom:1px solid #333"><b>${w.user}</b>: ${w.note} (${w.mins}m)</div>`).join('');
         }
 
-        function changeMonth(dir) {
-            date.setMonth(date.getMonth() + dir);
-            renderCalendar();
-        }
-
+        function changeMonth(dir) { currentDate.setMonth(currentDate.getMonth() + dir); renderCalendar(); }
         renderAll();
     </script>
 </body>
