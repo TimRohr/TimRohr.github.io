@@ -18,14 +18,53 @@
       margin-top: 20px;
     }
 
+/*
     #message {
       text-align: center;
-      font-size: 1.3em;
+      font-size: 1.5em;
       color: #4a148c;
       margin-top: 20px;
       padding: 0 10px;
       z-index: 1000;
       position: relative;
+      font-weight: bold;
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 
+                  0 0 20px rgba(255, 255, 255, 0.5);
+    }
+*/
+
+    #message {
+      text-align: center;
+      font-size: 1.5em;
+      color: #4a148c;
+      margin-top: 20px;
+      padding: 0 10px;
+      z-index: 1000;
+      position: relative;
+      font-weight: bold;
+      /* Glow */
+      text-shadow: 0 0 8px #ffffff, 0 0 15px rgba(255, 255, 255, 0.6);
+      /* Animation Trigger */
+      animation: pulseGlow 2s infinite ease-in-out;
+      -webkit-animation: pulseGlow 2s infinite ease-in-out; /* For older browsers */
+    }
+
+    /* Animation Definition */
+    @keyframes pulseGlow {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.6; /* Creates the "blink" effect */
+        transform: scale(1.05); /* Creates the "heartbeat" growth */
+      }
+    }
+
+    /* Necessary for Safari/Chrome older versions */
+    @-webkit-keyframes pulseGlow {
+      0%, 100% { opacity: 1; -webkit-transform: scale(1); }
+      50% { opacity: 0.6; -webkit-transform: scale(1.05); }
     }
 
     .container {
