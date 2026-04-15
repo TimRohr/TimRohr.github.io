@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-User Workout Tracker</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: #e0e0e0; display: flex; justify-content: center; padding: 40px; gap: 20px; }
+        .main-column { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .calendar-container, .tracker-sidebar, #log-panel { background: #1e1e1e; padding: 20px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .calendar-container { width: 350px; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; }
+        .day { padding: 10px; border-radius: 4px; cursor: pointer; background: #2c2c2c; font-size: 14px; }
+        .day.has-workout { border-bottom: 3px solid #00e676; }
+        .day.today { border: 1px solid #00e676; }
+        .tracker-sidebar { width: 280px; }
+        .stat-card { background: #2c2c2c; padding: 15px; border-radius: 6px; margin-bottom: 15px; border-left: 4px solid #00e676; }
+        .stat-value { font-size: 24px; font-weight: bold; color: #00e676; }
+        #log-panel { width: 350px; display: none; }
+        .entry-item { background: #2c2c2c; padding: 10px; margin-top: 10px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+        .btn-del { color: #ff5252; cursor: pointer; font-weight: bold; }
+        textarea, input, select { width: 100%; margin-top: 10px; background: #2c2c2c; color: white; border: 1px solid #444; border-radius: 4px; padding: 8px; box-sizing: border-box; }
+        .btn-save { background: #00e676; color: #000; border: none; padding: 10px; border-radius: 4px; cursor: pointer; margin-top: 10px; font-weight: bold; width: 100%; }
+        .user-tag { font-size: 10px; color: #00e676; text-transform: uppercase; display: block; }
+    </style>
+</head>
+<body>
+    <div class="main-column">
+        <div class="calendar-container">
+            <header>
+                <button onclick="changeMonth(-1)">&lt;</button>
+                <h3 id="monthDisplay"></h3>
+                <button onclick="changeMonth(1)">&gt;</button>
+            </header>
+            <div class="days-grid" id="calendarGrid"></div>
+        </div>
+
+        <div id="log-panel">
+            <h4 id="selectedDateText"></h4>
+            <div id="existingEntries"></div>
+            <hr style="border:0; border-top:1px solid #444; margin:15px 0;">
+            <h5>Log Workout</h5>
+            <input type="text" id="userInput" placeholder="Your Name (e.g. Alex)">
+            <input type="number" id="durationInput" placeholder="Duration (mins)">
+            <textarea id="workoutInput" placeholder="Details..."></textarea>
+            <button class="btn-save" onclick="saveWorkout()">Save Entry</button>
+        </div>
+    </div>
+
+    <div class="tracker-sidebar">
+        <div class="stat-card">
+            <h4>Filter by User</h4>
+            <select id="userFilter" onchange="renderAll()">
+                <option value="all">All Users</option>
+            </select>
+        </div>
+        <div class="stat-card">
+            <h4>Weekly Activity</h4>
+            <div class="stat-value" id="weeklyHours">0.0h</div>
+        </div>
+        <h4>Recent Logs</h4>
+        <div id="recentList"></div>
+    </div>
+
+    <script>
+        let date = new Date();
+        let selectedDateKey = "";
+        const workouts = JSON.parse(localStorage.getItem('workoutData_v3')) || {};
+
+        function renderAll() {
+            updateUserFilter();
+            renderCalendar();
+            renderStats();
+            if (selectedDateKey) openLog(selectedDateKey);
+        }
+
+        function updateUserFilter() {
+            const filter = document.getElementById('userFilter');
+            const currentVal = filter.value;
+            const users = new Set();
+            Object.values(workouts).forEach(day => day.forEach(w => users.add(w.user)));
+            
+            filter.innerHTML = '<option value="all">All Users</option>';
+            users.forEach(u => filter.innerHTML += `<option value="${u}">${u}</option>`);
+            filter.value = currentVal;
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const monthDisplay = document.getElementById('monthDisplay');
+            const selectedUser = document.getElementById('userFilter').value;
+            grid.innerHTML = "";
+            
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            monthDisplay.innerText = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div></div>`;
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateKey = `${year}-${month + 1}-${d}`;
+                let entries = workouts[dateKey] || [];
+                if (selectedUser !== 'all') entries = entries.filter(e => e.user === selectedUser);
+                
+                const isToday = new Date().toDateString() === new Date(year, month, d).toDateString() ? 'today' : '';
+                grid.innerHTML += `<div class="day ${isToday} ${entries.length > 0 ? 'has-workout' : ''}" onclick="openLog('${dateKey}')">${d}</div>`;
+            }
+        }
+
+        function openLog(dateKey) {
+            selectedDateKey = dateKey;
+            const panel = document.getElementById('log-panel');
+            const entryList = document.getElementById('existingEntries');
+            panel.style.display = 'block';
+            document.getElementById('selectedDateText').innerText = "Logs for " + dateKey;
+            
+            entryList.innerHTML = "";
+            (workouts[dateKey] || []).forEach((item, index) => {
+                entryList.innerHTML += `
+                    <div class="entry-item">
+                        <span><span class="user-tag">${item.user}</span><strong>${item.mins}m</strong>: ${item.note}</span>
+                        <span class="btn-del" onclick="deleteEntry('${dateKey}', ${index})">✕</span>
+                    </div>`;
+            });
+        }
+
+        function saveWorkout() {
+            const user = document.getElementById('userInput').value.trim();
+            const note = document.getElementById('workoutInput').value;
+            const mins = document.getElementById('durationInput').value;
+            if (user && note && mins) {
+                if (!workouts[selectedDateKey]) workouts[selectedDateKey] = [];
+                workouts[selectedDateKey].push({ user, note, mins: parseInt(mins), timestamp: new Date().getTime() });
+                localStorage.setItem('workoutData_v3', JSON.stringify(workouts));
+                renderAll();
+            }
+        }
+
+        function deleteEntry(dateKey, index) {
+            workouts[dateKey].splice(index, 1);
+            if (workouts[dateKey].length === 0) delete workouts[dateKey];
+            localStorage.setItem('workoutData_v3', JSON.stringify(workouts));
+            renderAll();
+        }
+
+        function renderStats() {
+            const selectedUser = document.getElementById('userFilter').value;
+            let all = [];
+            Object.keys(workouts).forEach(date => {
+                workouts[date].forEach(w => { if(selectedUser === 'all' || w.user === selectedUser) all.push({...w, date}); });
+            });
+            
+            all.sort((a,b) => b.timestamp - a.timestamp);
+            document.getElementById('recentList').innerHTML = all.slice(0, 5).map(w => `<div class="entry-item"><span style="font-size:11px"><span class="user-tag">${w.user}</span>${w.note}</span></div>`).join('') || "No logs.";
+
+            const now = new Date();
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).setHours(0,0,0,0);
+            let totalMins = all.filter(w => new Date(w.date) >= startOfWeek).reduce((sum, w) => sum + w.mins, 0);
+            document.getElementById('weeklyHours').innerText = (totalMins / 60).toFixed(1) + "h";
+        }
+
+        function changeMonth(dir) {
+            date.setMonth(date.getMonth() + dir);
+            renderCalendar();
+        }
+
+        renderAll();
+    </script>
+</body>
+</html>
