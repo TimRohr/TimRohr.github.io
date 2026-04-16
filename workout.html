@@ -103,6 +103,13 @@
             color: var(--accent);
         }
 
+        .day.selected {
+            background: #00e676;
+            color: #000;
+            font-weight: bold;
+            box-shadow: 0 0 0 2px rgba(0, 230, 118, 0.35);
+        }
+
         .entry-item {
             background: #2c2c2c;
             padding: 10px;
@@ -403,9 +410,10 @@
                 const dayEntries = workoutData[dateKey] ? Object.values(workoutData[dateKey]) : [];
                 const hasData = dayEntries.some(w => filter === "all" || w.user === filter);
                 const isToday = today.toDateString() === new Date(y, m, d).toDateString();
+                const isSelected = selectedDateKey === dateKey;
 
                 const dayDiv = document.createElement("div");
-                dayDiv.className = `day ${isToday ? "today" : ""} ${hasData ? "has-workout" : ""}`;
+                dayDiv.className = `day ${isToday ? "today" : ""} ${hasData ? "has-workout" : ""} ${isSelected ? "selected" : ""}`;
                 dayDiv.textContent = d;
                 dayDiv.onclick = () => openLog(dateKey);
                 grid.appendChild(dayDiv);
