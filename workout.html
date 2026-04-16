@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cloud Workout Tracker</title>
-
-    <!-- Firebase v8 SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    
+    <!-- 1. FIXED FULL SDK LINKS -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
 
     <style>
         :root { --accent: #00e676; --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; }
@@ -31,11 +31,60 @@
     </style>
 </head>
 <body>
-    <!-- your existing HTML stays the same -->
+
+    <div class="user-bar">
+        <div id="auth-section">
+            <button onclick="login()" class="btn-main" style="width: auto; margin-top:0">Login with Google</button>
+        </div>
+        <div id="user-display" class="hidden" style="display:flex; align-items:center; gap:15px;">
+            <span id="welcome-text"></span>
+            <button onclick="logout()" style="background:none; border:1px solid #444; color:#888; cursor:pointer; padding:5px 10px; border-radius:6px">Sign Out</button>
+        </div>
+        <select id="userFilter" onchange="renderAll()"><option value="all">Everyone</option></select>
+    </div>
+
+    <div class="container">
+        <div style="display:flex; flex-direction:column; gap:20px;">
+            <div class="card">
+                <header>
+                    <button onclick="changeMonth(-1)" style="background:none; border:none; color:white; cursor:pointer;">❮</button>
+                    <h3 id="monthDisplay" style="margin:0"></h3>
+                    <button onclick="changeMonth(1)" style="background:none; border:none; color:white; cursor:pointer;">❯</button>
+                </header>
+                <div class="days-grid" id="calendarGrid"></div>
+            </div>
+
+            <div class="card" id="log-panel">
+                <h4 id="selectedDateText" style="margin:0; color:var(--accent);"></h4>
+                <div id="existingEntries"></div>
+                <div style="margin-top:15px; border-top:1px solid #333; padding-top:15px;">
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <input type="number" id="durationInput" placeholder="Mins" style="width:80px;">
+                        <input type="text" id="workoutInput" placeholder="Workout details..." style="flex:1">
+                    </div>
+                    <button class="btn-main" onclick="saveWorkout()">ADD ENTRY</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" style="width: 300px;">
+            <select id="timeframe" onchange="renderStats()" style="background:transparent; border:none; color:#888; font-size:11px; font-weight:bold; margin-bottom:5px; width: 100%;">
+                <option value="day">TODAY</option>
+                <option value="week" selected>WEEK (SUN-SAT)</option>
+                <option value="month">MONTH</option>
+                <option value="year">YEAR</option>
+            </select>
+            <div class="stat-value" id="statDisplay">0.0h</div>
+            <h4 style="border-bottom:1px solid #333; padding-bottom:10px;">History</h4>
+            <div id="recentList"></div>
+        </div>
+    </div>
 
     <script>
+        // 2. CONFIG FROM YOUR PROJECT
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
+            apiKey: "AIzaSyBMWtr0_uUodMhyZl5iFDtt1PTbJdBdCkA",
             authDomain: "gizmos-workout-tracker.firebaseapp.com",
             databaseURL: "https://gizmos-workout-tracker-default-rtdb.firebaseio.com",
             projectId: "gizmos-workout-tracker",
@@ -51,9 +100,10 @@
         let workoutData = {};
         let currentUser = null;
 
-        window.onload = function () {
+        // 3. WAIT FOR SCRIPTS TO LOAD
+        window.onload = function() {
             if (typeof firebase === 'undefined') {
-                alert("Firebase failed to load. Check script URLs.");
+                alert("Firebase failed to load. Check your internet or script URLs.");
                 return;
             }
 
@@ -61,6 +111,7 @@
             auth = firebase.auth();
             db = firebase.database();
 
+            // Listen for Login State
             auth.onAuthStateChanged(user => {
                 if (user) {
                     currentUser = user;
@@ -78,14 +129,12 @@
             });
         };
 
-        function login() {
+        function login() { 
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).catch(err => alert(err.message));
         }
-
-        function logout() {
-            auth.signOut();
-        }
+        
+        function logout() { auth.signOut(); }
 
         function syncData() {
             db.ref('workouts').on('value', snapshot => {
@@ -98,11 +147,7 @@
             const filter = document.getElementById('userFilter');
             const currentF = filter.value;
             const users = new Set();
-
-            Object.values(workoutData).forEach(day =>
-                Object.values(day).forEach(w => users.add(w.user))
-            );
-
+            Object.values(workoutData).forEach(day => Object.values(day).forEach(w => users.add(w.user)));
             filter.innerHTML = '<option value="all">Everyone</option>';
             users.forEach(u => filter.innerHTML += `<option value="${u}">${u}</option>`);
             filter.value = currentF;
@@ -116,26 +161,17 @@
             const grid = document.getElementById('calendarGrid');
             const filter = document.getElementById('userFilter').value;
             grid.innerHTML = "";
-
-            const y = currentDate.getFullYear();
-            const m = currentDate.getMonth();
-
-            document.getElementById('monthDisplay').innerText =
-                currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
+            const y = currentDate.getFullYear(), m = currentDate.getMonth();
+            document.getElementById('monthDisplay').innerText = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
             const firstDay = new Date(y, m, 1).getDay();
             const daysInMonth = new Date(y, m + 1, 0).getDate();
 
             for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div></div>`;
-
             for (let d = 1; d <= daysInMonth; d++) {
                 const dateKey = `${y}-${m + 1}-${d}`;
-                const hasData = workoutData[dateKey] &&
-                    Object.values(workoutData[dateKey]).some(w => filter === 'all' || w.user === filter);
-
-                grid.innerHTML += `
-                    <div class="day ${new Date().toDateString() === new Date(y, m, d).toDateString() ? 'today' : ''} ${hasData ? 'has-workout' : ''}"
-                         onclick="openLog('${dateKey}')">${d}</div>`;
+                const hasData = workoutData[dateKey] && Object.values(workoutData[dateKey]).some(w => filter === 'all' || w.user === filter);
+                grid.innerHTML += `<div class="day ${new Date().toDateString() === new Date(y, m, d).toDateString() ? 'today' : ''} ${hasData ? 'has-workout' : ''}" onclick="openLog('${dateKey}')">${d}</div>`;
             }
         }
 
@@ -143,40 +179,34 @@
             selectedDateKey = dateKey;
             document.getElementById('log-panel').style.display = 'block';
             document.getElementById('selectedDateText').innerText = dateKey;
-
             const entries = workoutData[dateKey] ? Object.entries(workoutData[dateKey]) : [];
             document.getElementById('existingEntries').innerHTML = entries.map(([id, item]) => `
                 <div class="entry-item">
                     <small style="color:var(--accent)">${item.user}</small>
                     <div>${item.note} (${item.mins}m)</div>
                     <span class="btn-del" onclick="deleteEntry('${dateKey}', '${id}')">&times;</span>
-                </div>
-            `).join('');
+                </div>`).join('');
         }
 
         function saveWorkout() {
             if (!currentUser) return alert("Log in to save data!");
-            if (!selectedDateKey) return alert("Select a date first.");
-
             const note = document.getElementById('workoutInput').value.trim();
             const mins = document.getElementById('durationInput').value;
-
             if (note && mins) {
                 db.ref(`workouts/${selectedDateKey}`).push({
                     user: currentUser.displayName,
                     uid: currentUser.uid,
-                    note,
-                    mins: parseInt(mins, 10),
+                    note: note,
+                    mins: parseInt(mins),
                     timestamp: Date.now()
                 });
-
                 document.getElementById('workoutInput').value = "";
                 document.getElementById('durationInput').value = "";
             }
         }
 
         function deleteEntry(dateKey, entryId) {
-            if (confirm("Delete this entry?")) {
+            if(confirm("Delete this entry?")) {
                 db.ref(`workouts/${dateKey}/${entryId}`).remove();
             }
         }
@@ -185,41 +215,24 @@
             const filter = document.getElementById('userFilter').value;
             const timeframe = document.getElementById('timeframe').value;
             let all = [];
-
             Object.keys(workoutData).forEach(d => {
-                Object.values(workoutData[d]).forEach(w => {
-                    if (filter === 'all' || w.user === filter) {
-                        all.push({ ...w, date: d });
-                    }
-                });
+                Object.values(workoutData[d]).forEach(w => { if(filter === 'all' || w.user === filter) all.push({...w, date: d}); });
             });
-
+            
             const now = new Date();
             let start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            if(timeframe === 'week') start.setDate(now.getDate() - now.getDay());
+            else if(timeframe === 'month') start.setDate(1);
+            else if(timeframe === 'year') { start.setMonth(0); start.setDate(1); }
 
-            if (timeframe === 'week') start.setDate(now.getDate() - now.getDay());
-            else if (timeframe === 'month') start.setDate(1);
-            else if (timeframe === 'year') {
-                start.setMonth(0);
-                start.setDate(1);
-            }
-
-            const totalMins = all
-                .filter(w => new Date(w.date) >= start)
-                .reduce((s, w) => s + w.mins, 0);
-
+            const totalMins = all.filter(w => new Date(w.date) >= start).reduce((s, w) => s + w.mins, 0);
             document.getElementById('statDisplay').innerText = (totalMins / 60).toFixed(1) + "h";
-
-            all.sort((a, b) => b.timestamp - a.timestamp);
-            document.getElementById('recentList').innerHTML = all.slice(0, 5)
-                .map(w => `<div style="font-size:12px; padding:5px 0; border-bottom:1px solid #333"><b>${w.user}</b>: ${w.note} (${w.mins}m)</div>`)
-                .join('');
+            
+            all.sort((a,b) => b.timestamp - a.timestamp);
+            document.getElementById('recentList').innerHTML = all.slice(0, 5).map(w => `<div style="font-size:12px; padding:5px 0; border-bottom:1px solid #333"><b>${w.user}</b>: ${w.note} (${w.mins}m)</div>`).join('');
         }
 
-        function changeMonth(dir) {
-            currentDate.setMonth(currentDate.getMonth() + dir);
-            renderCalendar();
-        }
+        function changeMonth(dir) { currentDate.setMonth(currentDate.getMonth() + dir); renderCalendar(); }
     </script>
 </body>
 </html>
