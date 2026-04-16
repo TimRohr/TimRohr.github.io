@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cloud Workout Tracker</title>
 
-    <!-- Firebase v8 SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -92,6 +91,13 @@
             cursor: pointer;
             background: #2c2c2c;
             font-size: 14px;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, border 0.12s ease, background 0.12s ease;
+            border: 2px solid transparent;
+            user-select: none;
+        }
+
+        .day:hover {
+            transform: translateY(-1px);
         }
 
         .day.has-workout {
@@ -104,11 +110,16 @@
         }
 
         .day.selected {
-            background: #00e676;
+            background: var(--accent);
             color: #000;
             font-weight: bold;
             border: 2px solid #ffffff;
-            box-shadow: 0 0 10px rgba(0, 230, 118, 0.35);
+            box-shadow: 0 0 12px rgba(0, 230, 118, 0.55);
+            transform: scale(1.04);
+        }
+
+        .day.today.selected {
+            color: #000;
         }
 
         .entry-item {
@@ -252,8 +263,21 @@
         }
 
         function parseDateKey(dateKey) {
-            const [y, m, d] = dateKey.split("-").map(Number);
-            return new Date(y, m - 1, d);
+            const parts = String(dateKey).split("-").map(Number);
+            return new Date(parts[0], parts[1] - 1, parts[2]);
+        }
+
+        function formatDateKey(year, monthIndex, day) {
+            return `${year}-${monthIndex + 1}-${day}`;
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
         }
 
         function initializeApp() {
@@ -276,11 +300,7 @@
                     const welcomeText = el("welcome-text");
 
                     if (!authSection || !userDisplay || !welcomeText) {
-                        console.error("Missing required DOM elements.", {
-                            authSection,
-                            userDisplay,
-                            welcomeText
-                        });
+                        console.error("Missing required DOM elements.");
                         return;
                     }
 
@@ -347,7 +367,7 @@
             renderStats();
 
             if (selectedDateKey) {
-                openLog(selectedDateKey);
+                renderLogOnly(selectedDateKey);
             }
         }
 
@@ -403,28 +423,49 @@
             const today = new Date();
 
             for (let i = 0; i < firstDay; i++) {
-                grid.innerHTML += "<div></div>";
+                const spacer = document.createElement("div");
+                grid.appendChild(spacer);
             }
 
             for (let d = 1; d <= daysInMonth; d++) {
-                const dateKey = `${y}-${m + 1}-${d}`;
+                const dateKey = formatDateKey(y, m, d);
                 const dayEntries = workoutData[dateKey] ? Object.values(workoutData[dateKey]) : [];
                 const hasData = dayEntries.some(w => filter === "all" || w.user === filter);
                 const isToday = today.toDateString() === new Date(y, m, d).toDateString();
                 const isSelected = selectedDateKey === dateKey;
 
                 const dayDiv = document.createElement("div");
-                dayDiv.className = `day ${isToday ? "today" : ""} ${hasData ? "has-workout" : ""} ${isSelected ? "selected" : ""}`;
+                dayDiv.classList.add("day");
+                if (hasData) dayDiv.classList.add("has-workout");
+                if (isToday) dayDiv.classList.add("today");
+                if (isSelected) dayDiv.classList.add("selected");
+
                 dayDiv.textContent = d;
-                dayDiv.onclick = () => openLog(dateKey);
+                dayDiv.dataset.dateKey = dateKey;
+                dayDiv.addEventListener("click", () => openLog(dateKey));
+
                 grid.appendChild(dayDiv);
+            }
+        }
+
+        function setSelectedDayInDom(dateKey) {
+            document.querySelectorAll("#calendarGrid .day.selected").forEach(node => {
+                node.classList.remove("selected");
+            });
+
+            const selectedNode = document.querySelector(`#calendarGrid .day[data-date-key="${CSS.escape(dateKey)}"]`);
+            if (selectedNode) {
+                selectedNode.classList.add("selected");
             }
         }
 
         function openLog(dateKey) {
             selectedDateKey = dateKey;
-            renderCalendar();
+            setSelectedDayInDom(dateKey);
+            renderLogOnly(dateKey);
+        }
 
+        function renderLogOnly(dateKey) {
             const logPanel = el("log-panel");
             const selectedDateText = el("selectedDateText");
             const existingEntries = el("existingEntries");
@@ -600,16 +641,22 @@
 
         function changeMonth(dir) {
             currentDate.setMonth(currentDate.getMonth() + dir);
-            renderCalendar();
-        }
 
-        function escapeHtml(str) {
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#39;");
+            const y = currentDate.getFullYear();
+            const m = currentDate.getMonth();
+
+            if (selectedDateKey) {
+                const selected = parseDateKey(selectedDateKey);
+                if (selected.getFullYear() !== y || selected.getMonth() !== m) {
+                    selectedDateKey = "";
+                    const logPanel = el("log-panel");
+                    if (logPanel) {
+                        logPanel.style.display = "none";
+                    }
+                }
+            }
+
+            renderCalendar();
         }
     </script>
 </body>
