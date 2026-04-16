@@ -91,9 +91,9 @@
             cursor: pointer;
             background: #2c2c2c;
             font-size: 14px;
-            transition: transform 0.12s ease, box-shadow 0.12s ease, border 0.12s ease, background 0.12s ease;
             border: 2px solid transparent;
             user-select: none;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, border 0.12s ease;
         }
 
         .day:hover {
@@ -272,15 +272,6 @@
             return `${year}-${monthIndex + 1}-${day}`;
         }
 
-        function escapeHtml(str) {
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#39;");
-        }
-
         function initializeApp() {
             if (typeof firebase === "undefined") {
                 alert("Firebase failed to load. Check your internet or script URLs.");
@@ -313,22 +304,11 @@
                         syncData();
                     } else {
                         currentUser = null;
-
-                        if (workoutsRef) {
-                            workoutsRef.off();
-                            workoutsRef = null;
-                        }
+                        detachWorkoutListener();
+                        clearUiForSignedOutUser();
 
                         authSection.classList.remove("hidden");
                         userDisplay.classList.add("hidden");
-
-                        workoutData = {};
-                        selectedDateKey = "";
-
-                        const logPanel = el("log-panel");
-                        if (logPanel) {
-                            logPanel.style.display = "none";
-                        }
 
                         renderAll();
                     }
@@ -355,19 +335,8 @@
         }
 
         function logout() {
-            if (workoutsRef) {
-                workoutsRef.off();
-                workoutsRef = null;
-            }
-
-            workoutData = {};
-            selectedDateKey = "";
-
-            const logPanel = el("log-panel");
-            if (logPanel) {
-                logPanel.style.display = "none";
-            }
-
+            detachWorkoutListener();
+            clearUiForSignedOutUser();
             renderAll();
 
             if (!auth) return;
@@ -378,13 +347,27 @@
             });
         }
 
+        function detachWorkoutListener() {
+            if (workoutsRef) {
+                workoutsRef.off();
+                workoutsRef = null;
+            }
+        }
+
+        function clearUiForSignedOutUser() {
+            workoutData = {};
+            selectedDateKey = "";
+
+            const logPanel = el("log-panel");
+            if (logPanel) {
+                logPanel.style.display = "none";
+            }
+        }
+
         function syncData() {
             if (!db) return;
 
-            if (workoutsRef) {
-                workoutsRef.off();
-            }
-
+            detachWorkoutListener();
             workoutsRef = db.ref("workouts");
 
             workoutsRef.on(
@@ -395,10 +378,7 @@
                 },
                 err => {
                     console.error("Realtime DB read error:", err);
-
-                    if (err && err.code === "PERMISSION_DENIED" && (!auth || !auth.currentUser)) {
-                        return;
-                    }
+                    // Intentionally silent. Do not alert on permission errors during logout/sign-out races.
                 }
             );
         }
