@@ -253,6 +253,7 @@
 
         let auth = null;
         let db = null;
+        let workoutsRef = null;
         let currentDate = new Date();
         let selectedDateKey = "";
         let workoutData = {};
@@ -312,9 +313,23 @@
                         syncData();
                     } else {
                         currentUser = null;
+
+                        if (workoutsRef) {
+                            workoutsRef.off();
+                            workoutsRef = null;
+                        }
+
                         authSection.classList.remove("hidden");
                         userDisplay.classList.add("hidden");
+
                         workoutData = {};
+                        selectedDateKey = "";
+
+                        const logPanel = el("log-panel");
+                        if (logPanel) {
+                            logPanel.style.display = "none";
+                        }
+
                         renderAll();
                     }
                 });
@@ -340,7 +355,23 @@
         }
 
         function logout() {
+            if (workoutsRef) {
+                workoutsRef.off();
+                workoutsRef = null;
+            }
+
+            workoutData = {};
+            selectedDateKey = "";
+
+            const logPanel = el("log-panel");
+            if (logPanel) {
+                logPanel.style.display = "none";
+            }
+
+            renderAll();
+
             if (!auth) return;
+
             auth.signOut().catch(err => {
                 console.error("Logout error:", err);
                 alert(err.message);
@@ -350,15 +381,26 @@
         function syncData() {
             if (!db) return;
 
-            db.ref("workouts").off();
+            if (workoutsRef) {
+                workoutsRef.off();
+            }
 
-            db.ref("workouts").on("value", snapshot => {
-                workoutData = snapshot.val() || {};
-                renderAll();
-            }, err => {
-                console.error("Realtime DB read error:", err);
-                alert(err.message);
-            });
+            workoutsRef = db.ref("workouts");
+
+            workoutsRef.on(
+                "value",
+                snapshot => {
+                    workoutData = snapshot.val() || {};
+                    renderAll();
+                },
+                err => {
+                    console.error("Realtime DB read error:", err);
+
+                    if (err && err.code === "PERMISSION_DENIED" && (!auth || !auth.currentUser)) {
+                        return;
+                    }
+                }
+            );
         }
 
         function renderAll() {
