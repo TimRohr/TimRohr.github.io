@@ -155,7 +155,6 @@
     </style>
 </head>
 <body>
-
     <div class="user-bar">
         <div id="auth-section">
             <button onclick="login()" class="btn-main" style="width:auto; margin-top:0;">
@@ -251,7 +250,7 @@
 
         function initializeApp() {
             if (typeof firebase === "undefined") {
-                alert("Firebase failed to load. Check the SDK script URLs.");
+                alert("Firebase failed to load. Check your internet or script URLs.");
                 return;
             }
 
@@ -363,7 +362,10 @@
             Array.from(users)
                 .sort((a, b) => a.localeCompare(b))
                 .forEach(user => {
-                    filter.innerHTML += `<option value="${escapeHtml(user)}">${escapeHtml(user)}</option>`;
+                    const option = document.createElement("option");
+                    option.value = user;
+                    option.textContent = user;
+                    filter.appendChild(option);
                 });
 
             const availableValues = ["all", ...Array.from(users)];
@@ -402,12 +404,11 @@
                 const hasData = dayEntries.some(w => filter === "all" || w.user === filter);
                 const isToday = today.toDateString() === new Date(y, m, d).toDateString();
 
-                grid.innerHTML += `
-                    <div
-                        class="day ${isToday ? "today" : ""} ${hasData ? "has-workout" : ""}"
-                        onclick="openLog('${dateKey}')"
-                    >${d}</div>
-                `;
+                const dayDiv = document.createElement("div");
+                dayDiv.className = `day ${isToday ? "today" : ""} ${hasData ? "has-workout" : ""}`;
+                dayDiv.textContent = d;
+                dayDiv.onclick = () => openLog(dateKey);
+                grid.appendChild(dayDiv);
             }
         }
 
@@ -436,17 +437,33 @@
                 return;
             }
 
-            existingEntries.innerHTML = filteredEntries.map(([id, item]) => {
-                const canDelete = currentUser && item.uid === currentUser.uid;
+            existingEntries.innerHTML = "";
 
-                return `
-                    <div class="entry-item">
-                        <small style="color:var(--accent)">${escapeHtml(item.user || "Unknown")}</small>
-                        <div>${escapeHtml(item.note || "")} (${Number(item.mins || 0)}m)</div>
-                        ${canDelete ? `<span class="btn-del" onclick="deleteEntry('${dateKey}', '${id}')">&times;</span>` : ""}
-                    </div>
-                `;
-            }).join("");
+            filteredEntries.forEach(([id, item]) => {
+                const wrap = document.createElement("div");
+                wrap.className = "entry-item";
+
+                const userEl = document.createElement("small");
+                userEl.style.color = "var(--accent)";
+                userEl.textContent = item.user || "Unknown";
+
+                const noteEl = document.createElement("div");
+                noteEl.textContent = `${item.note || ""} (${Number(item.mins || 0)}m)`;
+
+                wrap.appendChild(userEl);
+                wrap.appendChild(noteEl);
+
+                const canDelete = currentUser && item.uid === currentUser.uid;
+                if (canDelete) {
+                    const del = document.createElement("span");
+                    del.className = "btn-del";
+                    del.innerHTML = "&times;";
+                    del.onclick = () => deleteEntry(dateKey, id);
+                    wrap.appendChild(del);
+                }
+
+                existingEntries.appendChild(wrap);
+            });
         }
 
         function saveWorkout() {
