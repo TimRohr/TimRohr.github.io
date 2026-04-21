@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Cloud Workout Tracker</title>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -14,33 +14,61 @@
             --accent: #00e676;
             --bg: #121212;
             --card: #1e1e1e;
+            --card-2: #242424;
             --text: #e0e0e0;
+            --muted: #999;
+            --border: #444;
+            --danger: #ff5252;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html, body {
+            max-width: 100%;
+            overflow-x: hidden;
         }
 
         body {
-            font-family: sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             background: var(--bg);
             color: var(--text);
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            padding: 16px;
             margin: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .user-bar {
             width: 100%;
-            max-width: 900px;
+            max-width: 980px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             background: var(--card);
-            padding: 15px;
-            border-radius: 12px;
-            box-sizing: border-box;
+            padding: 14px;
+            border-radius: 14px;
             gap: 12px;
             flex-wrap: wrap;
+        }
+
+        .left-group,
+        .right-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        input,
+        textarea,
+        select,
+        button {
+            font: inherit;
         }
 
         input,
@@ -48,51 +76,97 @@
         select {
             background: #2c2c2c;
             color: white;
-            border: 1px solid #444;
-            border-radius: 6px;
-            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            min-height: 42px;
+        }
+
+        select {
+            max-width: 100%;
         }
 
         .container {
             display: flex;
             gap: 20px;
-            max-width: 1000px;
+            max-width: 980px;
             width: 100%;
-            flex-wrap: wrap;
+            align-items: flex-start;
             justify-content: center;
+        }
+
+        .main-column {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex: 1 1 620px;
+            min-width: 0;
+        }
+
+        .side-column {
+            flex: 0 0 300px;
+            min-width: 280px;
         }
 
         .card {
             background: var(--card);
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-            width: 350px;
-            box-sizing: border-box;
+            padding: 18px;
+            border-radius: 14px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
+            width: 100%;
         }
 
-        header {
+        header.calendar-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 14px;
+            gap: 10px;
+        }
+
+        .month-nav-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 24px;
+            line-height: 1;
+            padding: 8px 10px;
+            border-radius: 8px;
+            min-width: 44px;
+            min-height: 44px;
+        }
+
+        .month-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        #monthDisplay {
+            margin: 0;
+            text-align: center;
+            font-size: 1.15rem;
+            flex: 1;
         }
 
         .days-grid {
             display: grid;
-            grid-template-columns: repeat(7, 1fr);
+            grid-template-columns: repeat(7, minmax(0, 1fr));
             gap: 8px;
             text-align: center;
         }
 
         .day {
-            padding: 12px 5px;
-            border-radius: 8px;
+            min-height: 46px;
+            padding: 12px 4px;
+            border-radius: 10px;
             cursor: pointer;
             background: #2c2c2c;
             font-size: 14px;
             border: 2px solid transparent;
             user-select: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease, border 0.12s ease;
         }
 
@@ -115,7 +189,7 @@
             font-weight: bold;
             border: 2px solid #ffffff;
             box-shadow: 0 0 12px rgba(0, 230, 118, 0.55);
-            transform: scale(1.04);
+            transform: scale(1.03);
         }
 
         .day.today.selected {
@@ -124,39 +198,70 @@
 
         .entry-item {
             background: #2c2c2c;
-            padding: 10px;
+            padding: 12px;
             margin-top: 10px;
-            border-radius: 8px;
+            border-radius: 10px;
             position: relative;
             border-left: 3px solid var(--accent);
             text-align: left;
         }
 
+        .entry-note {
+            margin-top: 4px;
+            padding-right: 24px;
+            word-break: break-word;
+        }
+
         .btn-del {
-            color: #ff5252;
+            color: var(--danger);
             cursor: pointer;
             position: absolute;
             right: 10px;
-            top: 10px;
+            top: 8px;
             font-weight: bold;
+            font-size: 20px;
+            line-height: 1;
         }
 
         .btn-main {
             background: var(--accent);
             color: #000;
             border: none;
-            padding: 12px;
-            border-radius: 6px;
+            padding: 12px 14px;
+            border-radius: 8px;
             cursor: pointer;
             font-weight: bold;
             width: 100%;
             margin-top: 10px;
+            min-height: 46px;
+        }
+
+        .btn-main:hover {
+            filter: brightness(0.98);
+        }
+
+        .logout-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: #aaa;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            min-height: 42px;
         }
 
         .stat-value {
             font-size: 32px;
             font-weight: bold;
             color: var(--accent);
+            margin-bottom: 8px;
+        }
+
+        .history-item {
+            font-size: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #333;
+            word-break: break-word;
         }
 
         #log-panel {
@@ -168,41 +273,165 @@
         }
 
         .muted {
-            color: #999;
+            color: var(--muted);
             font-size: 12px;
+        }
+
+        .entry-form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .mins-input {
+            width: 90px;
+            flex: 0 0 90px;
+        }
+
+        .details-input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .timeframe-select {
+            background: transparent;
+            border: none;
+            color: #888;
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            width: 100%;
+            min-height: 32px;
+            padding-left: 0;
+        }
+
+        @media (max-width: 860px) {
+            .container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .main-column,
+            .side-column {
+                flex: 1 1 auto;
+                min-width: 0;
+                width: 100%;
+            }
+
+            .side-column {
+                order: 3;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 10px;
+            }
+
+            .user-bar {
+                padding: 12px;
+                border-radius: 12px;
+                align-items: stretch;
+            }
+
+            .left-group,
+            .right-group {
+                width: 100%;
+            }
+
+            .right-group {
+                justify-content: space-between;
+            }
+
+            #userFilter {
+                width: 100%;
+            }
+
+            .card {
+                padding: 14px;
+                border-radius: 12px;
+            }
+
+            #monthDisplay {
+                font-size: 1rem;
+            }
+
+            .days-grid {
+                gap: 6px;
+            }
+
+            .day {
+                min-height: 42px;
+                padding: 10px 2px;
+                font-size: 13px;
+                border-radius: 8px;
+            }
+
+            .entry-form-row {
+                flex-direction: column;
+            }
+
+            .mins-input,
+            .details-input {
+                width: 100%;
+                flex: 1 1 auto;
+            }
+
+            .stat-value {
+                font-size: 28px;
+            }
+        }
+
+        @media (max-width: 420px) {
+            .day {
+                min-height: 38px;
+                font-size: 12px;
+            }
+
+            .month-nav-btn {
+                font-size: 22px;
+                min-width: 40px;
+                min-height: 40px;
+            }
+
+            .btn-main,
+            .logout-btn,
+            input,
+            select {
+                min-height: 44px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="user-bar">
-        <div id="auth-section">
-            <button onclick="login()" class="btn-main" style="width:auto; margin-top:0;">
-                Login with Google
-            </button>
+        <div class="left-group">
+            <div id="auth-section">
+                <button onclick="login()" class="btn-main" style="width:auto; margin-top:0;">
+                    Login with Google
+                </button>
+            </div>
+
+            <div id="user-display" class="hidden" style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                <span id="welcome-text"></span>
+                <button onclick="logout()" class="logout-btn">Sign Out</button>
+            </div>
         </div>
 
-        <div id="user-display" class="hidden" style="display:flex; align-items:center; gap:15px;">
-            <span id="welcome-text"></span>
-            <button
-                onclick="logout()"
-                style="background:none; border:1px solid #444; color:#888; cursor:pointer; padding:5px 10px; border-radius:6px;"
-            >
-                Sign Out
-            </button>
+        <div class="right-group">
+            <select id="userFilter" onchange="renderAll()">
+                <option value="all">Everyone</option>
+            </select>
         </div>
-
-        <select id="userFilter" onchange="renderAll()">
-            <option value="all">Everyone</option>
-        </select>
     </div>
 
     <div class="container">
-        <div style="display:flex; flex-direction:column; gap:20px;">
+        <div class="main-column">
             <div class="card">
-                <header>
-                    <button onclick="changeMonth(-1)" style="background:none; border:none; color:white; cursor:pointer;">❮</button>
-                    <h3 id="monthDisplay" style="margin:0;"></h3>
-                    <button onclick="changeMonth(1)" style="background:none; border:none; color:white; cursor:pointer;">❯</button>
+                <header class="calendar-header">
+                    <button class="month-nav-btn" onclick="changeMonth(-1)" aria-label="Previous month">❮</button>
+                    <h3 id="monthDisplay"></h3>
+                    <button class="month-nav-btn" onclick="changeMonth(1)" aria-label="Next month">❯</button>
                 </header>
                 <div class="days-grid" id="calendarGrid"></div>
             </div>
@@ -212,30 +441,28 @@
                 <div id="existingEntries"></div>
 
                 <div style="margin-top:15px; border-top:1px solid #333; padding-top:15px;">
-                    <div style="display:flex; gap:10px; margin-bottom:10px;">
-                        <input type="number" id="durationInput" placeholder="Mins" style="width:80px;" min="1" />
-                        <input type="text" id="workoutInput" placeholder="Workout details..." style="flex:1;" />
+                    <div class="entry-form-row">
+                        <input type="number" id="durationInput" class="mins-input" placeholder="Mins" min="1" inputmode="numeric" />
+                        <input type="text" id="workoutInput" class="details-input" placeholder="Workout details..." />
                     </div>
                     <button class="btn-main" onclick="saveWorkout()">ADD ENTRY</button>
                 </div>
             </div>
         </div>
 
-        <div class="card" style="width:300px;">
-            <select
-                id="timeframe"
-                onchange="renderStats()"
-                style="background:transparent; border:none; color:#888; font-size:11px; font-weight:bold; margin-bottom:5px; width:100%;"
-            >
-                <option value="day">TODAY</option>
-                <option value="week" selected>WEEK (SUN-SAT)</option>
-                <option value="month">MONTH</option>
-                <option value="year">YEAR</option>
-            </select>
+        <div class="side-column">
+            <div class="card">
+                <select id="timeframe" class="timeframe-select" onchange="renderStats()">
+                    <option value="day">TODAY</option>
+                    <option value="week" selected>WEEK (SUN-SAT)</option>
+                    <option value="month">MONTH</option>
+                    <option value="year">YEAR</option>
+                </select>
 
-            <div class="stat-value" id="statDisplay">0.0h</div>
-            <h4 style="border-bottom:1px solid #333; padding-bottom:10px;">History</h4>
-            <div id="recentList"></div>
+                <div class="stat-value" id="statDisplay">0.0h</div>
+                <h4 style="border-bottom:1px solid #333; padding-bottom:10px;">History</h4>
+                <div id="recentList"></div>
+            </div>
         </div>
     </div>
 
@@ -270,6 +497,13 @@
 
         function formatDateKey(year, monthIndex, day) {
             return `${year}-${monthIndex + 1}-${day}`;
+        }
+
+        function escapeCss(value) {
+            if (window.CSS && typeof window.CSS.escape === "function") {
+                return window.CSS.escape(value);
+            }
+            return String(value).replace(/"/g, '\\"');
         }
 
         function initializeApp() {
@@ -378,7 +612,6 @@
                 },
                 err => {
                     console.error("Realtime DB read error:", err);
-                    // Intentionally silent. Do not alert on permission errors during logout/sign-out races.
                 }
             );
         }
@@ -475,7 +708,7 @@
                 node.classList.remove("selected");
             });
 
-            const selectedNode = document.querySelector(`#calendarGrid .day[data-date-key="${CSS.escape(dateKey)}"]`);
+            const selectedNode = document.querySelector(`#calendarGrid .day[data-date-key="${escapeCss(dateKey)}"]`);
             if (selectedNode) {
                 selectedNode.classList.add("selected");
             }
@@ -501,9 +734,7 @@
             const filter = filterEl.value;
             const entries = workoutData[dateKey] ? Object.entries(workoutData[dateKey]) : [];
 
-            const filteredEntries = entries.filter(([, item]) => {
-                return filter === "all" || item.user === filter;
-            });
+            const filteredEntries = entries.filter(([, item]) => filter === "all" || item.user === filter);
 
             if (!filteredEntries.length) {
                 existingEntries.innerHTML = '<div class="muted" style="margin-top:10px;">No entries for this date.</div>';
@@ -521,6 +752,7 @@
                 userEl.textContent = item.user || "Unknown";
 
                 const noteEl = document.createElement("div");
+                noteEl.className = "entry-note";
                 noteEl.textContent = `${item.note || ""} (${Number(item.mins || 0)}m)`;
 
                 wrap.appendChild(userEl);
@@ -655,8 +887,8 @@
             }
 
             recentList.innerHTML = all.slice(0, 5).map(w => `
-                <div style="font-size:12px; padding:5px 0; border-bottom:1px solid #333;">
-                    <b>${escapeHtml(w.user || "Unknown")}</b>: ${escapeHtml(w.note || "")} (${Number(w.mins || 0)}m)
+                <div class="history-item">
+                    <b>${w.user || "Unknown"}</b>: ${w.note || ""} (${Number(w.mins || 0)}m)
                 </div>
             `).join("");
         }
