@@ -14,7 +14,6 @@
             --accent: #00e676;
             --bg: #121212;
             --card: #1e1e1e;
-            --card-2: #242424;
             --text: #e0e0e0;
             --muted: #999;
             --border: #444;
@@ -212,6 +211,12 @@
             word-break: break-word;
         }
 
+        .entry-meta {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
         .btn-del {
             color: var(--danger);
             cursor: pointer;
@@ -293,6 +298,18 @@
             min-width: 0;
         }
 
+        .entry-user-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .entry-user-select,
+        .entry-user-custom {
+            flex: 1;
+            min-width: 0;
+        }
+
         .timeframe-select {
             background: transparent;
             border: none;
@@ -367,12 +384,15 @@
                 border-radius: 8px;
             }
 
-            .entry-form-row {
+            .entry-form-row,
+            .entry-user-row {
                 flex-direction: column;
             }
 
             .mins-input,
-            .details-input {
+            .details-input,
+            .entry-user-select,
+            .entry-user-custom {
                 width: 100%;
                 flex: 1 1 auto;
             }
@@ -441,10 +461,24 @@
                 <div id="existingEntries"></div>
 
                 <div style="margin-top:15px; border-top:1px solid #333; padding-top:15px;">
+                    <div class="entry-user-row">
+                        <select id="entryUserSelect" class="entry-user-select" onchange="handleEntryUserChange()">
+                            <option value="me">Me</option>
+                            <option value="custom">Custom name...</option>
+                        </select>
+                        <input
+                            type="text"
+                            id="entryUserCustom"
+                            class="entry-user-custom hidden"
+                            placeholder="Enter name"
+                        />
+                    </div>
+
                     <div class="entry-form-row">
                         <input type="number" id="durationInput" class="mins-input" placeholder="Mins" min="1" inputmode="numeric" />
                         <input type="text" id="workoutInput" class="details-input" placeholder="Workout details..." />
                     </div>
+
                     <button class="btn-main" onclick="saveWorkout()">ADD ENTRY</button>
                 </div>
             </div>
@@ -616,8 +650,25 @@
             );
         }
 
+        function getAllTrackedUsers() {
+            const users = new Set();
+
+            Object.values(workoutData).forEach(day => {
+                if (!day || typeof day !== "object") return;
+
+                Object.values(day).forEach(entry => {
+                    if (entry && entry.user) {
+                        users.add(entry.user);
+                    }
+                });
+            });
+
+            return Array.from(users).sort((a, b) => a.localeCompare(b));
+        }
+
         function renderAll() {
             renderUserFilter();
+            renderEntryUserOptions();
             renderCalendar();
             renderStats();
 
@@ -631,28 +682,88 @@
             if (!filter) return;
 
             const previousValue = filter.value || "all";
-            const users = new Set();
-
-            Object.values(workoutData).forEach(day => {
-                if (!day || typeof day !== "object") return;
-                Object.values(day).forEach(entry => {
-                    if (entry && entry.user) users.add(entry.user);
-                });
-            });
+            const users = getAllTrackedUsers();
 
             filter.innerHTML = '<option value="all">Everyone</option>';
 
-            Array.from(users)
-                .sort((a, b) => a.localeCompare(b))
-                .forEach(user => {
-                    const option = document.createElement("option");
-                    option.value = user;
-                    option.textContent = user;
-                    filter.appendChild(option);
-                });
+            users.forEach(user => {
+                const option = document.createElement("option");
+                option.value = user;
+                option.textContent = user;
+                filter.appendChild(option);
+            });
 
-            const availableValues = ["all", ...Array.from(users)];
+            const availableValues = ["all", ...users];
             filter.value = availableValues.includes(previousValue) ? previousValue : "all";
+        }
+
+        function renderEntryUserOptions() {
+            const select = el("entryUserSelect");
+            const customInput = el("entryUserCustom");
+            if (!select || !customInput) return;
+
+            const previousValue = select.value || "me";
+            const users = getAllTrackedUsers();
+            const currentDisplayName = currentUser ? (currentUser.displayName || currentUser.email || "User") : "Me";
+
+            select.innerHTML = "";
+
+            const meOption = document.createElement("option");
+            meOption.value = "me";
+            meOption.textContent = `Me (${currentDisplayName})`;
+            select.appendChild(meOption);
+
+            users.forEach(user => {
+                if (user === currentDisplayName) return;
+                const option = document.createElement("option");
+                option.value = `user:${user}`;
+                option.textContent = user;
+                select.appendChild(option);
+            });
+
+            const customOption = document.createElement("option");
+            customOption.value = "custom";
+            customOption.textContent = "Custom name...";
+            select.appendChild(customOption);
+
+            const validValues = ["me", "custom", ...users.map(user => `user:${user}`).filter(v => v !== `user:${currentDisplayName}`)];
+            select.value = validValues.includes(previousValue) ? previousValue : "me";
+
+            handleEntryUserChange();
+        }
+
+        function handleEntryUserChange() {
+            const select = el("entryUserSelect");
+            const customInput = el("entryUserCustom");
+            if (!select || !customInput) return;
+
+            if (select.value === "custom") {
+                customInput.classList.remove("hidden");
+            } else {
+                customInput.classList.add("hidden");
+                customInput.value = "";
+            }
+        }
+
+        function getSelectedEntryUserName() {
+            const select = el("entryUserSelect");
+            const customInput = el("entryUserCustom");
+
+            if (!select) return "";
+
+            if (select.value === "me") {
+                return currentUser ? (currentUser.displayName || currentUser.email || "User") : "";
+            }
+
+            if (select.value === "custom") {
+                return customInput ? customInput.value.trim() : "";
+            }
+
+            if (select.value.startsWith("user:")) {
+                return select.value.slice(5);
+            }
+
+            return "";
         }
 
         function renderCalendar() {
@@ -733,7 +844,6 @@
 
             const filter = filterEl.value;
             const entries = workoutData[dateKey] ? Object.entries(workoutData[dateKey]) : [];
-
             const filteredEntries = entries.filter(([, item]) => filter === "all" || item.user === filter);
 
             if (!filteredEntries.length) {
@@ -757,6 +867,13 @@
 
                 wrap.appendChild(userEl);
                 wrap.appendChild(noteEl);
+
+                if (item.createdBy && item.createdBy !== item.user) {
+                    const metaEl = document.createElement("div");
+                    metaEl.className = "entry-meta";
+                    metaEl.textContent = `Logged by ${item.createdBy}`;
+                    wrap.appendChild(metaEl);
+                }
 
                 const canDelete = currentUser && item.uid === currentUser.uid;
                 if (canDelete) {
@@ -789,6 +906,13 @@
 
             const note = workoutInput.value.trim();
             const mins = parseInt(durationInput.value, 10);
+            const targetUser = getSelectedEntryUserName();
+            const currentDisplayName = currentUser.displayName || currentUser.email || "User";
+
+            if (!targetUser) {
+                alert("Choose a user or enter a custom name.");
+                return;
+            }
 
             if (!note) {
                 alert("Enter workout details.");
@@ -801,14 +925,22 @@
             }
 
             db.ref(`workouts/${selectedDateKey}`).push({
-                user: currentUser.displayName || currentUser.email || "User",
+                user: targetUser,
                 uid: currentUser.uid,
+                createdBy: currentDisplayName,
+                createdByUid: currentUser.uid,
                 note: note,
                 mins: mins,
                 timestamp: Date.now()
             }).then(() => {
                 workoutInput.value = "";
                 durationInput.value = "";
+
+                const entryUserSelect = el("entryUserSelect");
+                const entryUserCustom = el("entryUserCustom");
+                if (entryUserSelect) entryUserSelect.value = "me";
+                if (entryUserCustom) entryUserCustom.value = "";
+                handleEntryUserChange();
             }).catch(err => {
                 console.error("Save error:", err);
                 alert(err.message);
