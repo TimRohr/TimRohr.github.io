@@ -282,6 +282,13 @@
             font-size: 12px;
         }
 
+        .field-label {
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
         .entry-form-row {
             display: flex;
             gap: 10px;
@@ -461,6 +468,7 @@
                 <div id="existingEntries"></div>
 
                 <div style="margin-top:15px; border-top:1px solid #333; padding-top:15px;">
+                    <label class="field-label" for="entryUserSelect">Log entry for</label>
                     <div class="entry-user-row">
                         <select id="entryUserSelect" class="entry-user-select" onchange="handleEntryUserChange()">
                             <option value="me">Me</option>
@@ -650,6 +658,10 @@
             );
         }
 
+        function getCurrentDisplayName() {
+            return currentUser ? (currentUser.displayName || currentUser.email || "User") : "";
+        }
+
         function getAllTrackedUsers() {
             const users = new Set();
 
@@ -702,15 +714,16 @@
             const customInput = el("entryUserCustom");
             if (!select || !customInput) return;
 
-            const previousValue = select.value || "me";
+            const previousValue = select.dataset.savedValue || select.value || "me";
+            const previousCustom = customInput.dataset.savedValue || customInput.value || "";
             const users = getAllTrackedUsers();
-            const currentDisplayName = currentUser ? (currentUser.displayName || currentUser.email || "User") : "Me";
+            const currentDisplayName = getCurrentDisplayName();
 
             select.innerHTML = "";
 
             const meOption = document.createElement("option");
             meOption.value = "me";
-            meOption.textContent = `Me (${currentDisplayName})`;
+            meOption.textContent = currentDisplayName ? `Me (${currentDisplayName})` : "Me";
             select.appendChild(meOption);
 
             users.forEach(user => {
@@ -726,8 +739,9 @@
             customOption.textContent = "Custom name...";
             select.appendChild(customOption);
 
-            const validValues = ["me", "custom", ...users.map(user => `user:${user}`).filter(v => v !== `user:${currentDisplayName}`)];
+            const validValues = ["me", "custom", ...users.filter(user => user !== currentDisplayName).map(user => `user:${user}`)];
             select.value = validValues.includes(previousValue) ? previousValue : "me";
+            customInput.value = previousCustom;
 
             handleEntryUserChange();
         }
@@ -737,12 +751,15 @@
             const customInput = el("entryUserCustom");
             if (!select || !customInput) return;
 
+            select.dataset.savedValue = select.value;
+
             if (select.value === "custom") {
                 customInput.classList.remove("hidden");
             } else {
                 customInput.classList.add("hidden");
-                customInput.value = "";
             }
+
+            customInput.dataset.savedValue = customInput.value;
         }
 
         function getSelectedEntryUserName() {
@@ -752,7 +769,7 @@
             if (!select) return "";
 
             if (select.value === "me") {
-                return currentUser ? (currentUser.displayName || currentUser.email || "User") : "";
+                return getCurrentDisplayName();
             }
 
             if (select.value === "custom") {
@@ -901,13 +918,15 @@
 
             const workoutInput = el("workoutInput");
             const durationInput = el("durationInput");
+            const entryUserSelect = el("entryUserSelect");
+            const entryUserCustom = el("entryUserCustom");
 
             if (!workoutInput || !durationInput) return;
 
             const note = workoutInput.value.trim();
             const mins = parseInt(durationInput.value, 10);
             const targetUser = getSelectedEntryUserName();
-            const currentDisplayName = currentUser.displayName || currentUser.email || "User";
+            const currentDisplayName = getCurrentDisplayName();
 
             if (!targetUser) {
                 alert("Choose a user or enter a custom name.");
@@ -936,10 +955,16 @@
                 workoutInput.value = "";
                 durationInput.value = "";
 
-                const entryUserSelect = el("entryUserSelect");
-                const entryUserCustom = el("entryUserCustom");
-                if (entryUserSelect) entryUserSelect.value = "me";
-                if (entryUserCustom) entryUserCustom.value = "";
+                if (entryUserSelect) {
+                    entryUserSelect.value = "me";
+                    entryUserSelect.dataset.savedValue = "me";
+                }
+
+                if (entryUserCustom) {
+                    entryUserCustom.value = "";
+                    entryUserCustom.dataset.savedValue = "";
+                }
+
                 handleEntryUserChange();
             }).catch(err => {
                 console.error("Save error:", err);
@@ -1044,6 +1069,12 @@
 
             renderCalendar();
         }
+
+        document.addEventListener("input", event => {
+            if (event.target && event.target.id === "entryUserCustom") {
+                event.target.dataset.savedValue = event.target.value;
+            }
+        });
     </script>
 </body>
 </html>
